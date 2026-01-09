@@ -29,12 +29,25 @@ pnpm install
 pnpm dev
 ```
 
+### Optional local model setup
+
+If you want to use local models through Ollama:
+
+```bash
+ollama pull llama3.2
+```
+
 ### Build
 
 ```bash
 pnpm build
 pnpm dist
 ```
+
+## Troubleshooting
+
+- If dev startup fails after dependency updates, run `pnpm install --frozen-lockfile`.
+- If Electron fails to load after a frontend refactor, rerun `pnpm build:electron`.
 
 ## Contributing
 

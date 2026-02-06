@@ -16,3 +16,8 @@ Report privately by contacting the maintainers listed in `MAINTAINERS.md` and in
 - Suggested remediation (if known)
 
 We will acknowledge reports as quickly as possible and coordinate a fix and disclosure timeline.
+
+## Response targets
+
+- Initial acknowledgement: within 5 business days
+- Triage status update: within 10 business days

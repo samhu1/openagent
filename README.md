@@ -1,7 +1,3 @@
-<div align="center">
-  <img src=".github/banner.png" alt="OAgent Banner" />
-</div>
-
 <h1 align="center">OAgent</h1>
 
 <p align="center">

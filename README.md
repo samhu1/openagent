@@ -32,7 +32,7 @@ With native access to the system filesystem, a built-in terminal multiplexer, a 
 
 - Node.js 20+
 - pnpm 10+
-- macOS (Tahoe+ recommended for Liquid Glass transparency), Windows, or Linux
+- macOS, Windows, or Linux
 
 ### Installation
 

@@ -1,30 +1,76 @@
-<h1 align="center">OAgent</h1>
+# OAgent
 
 <p align="center">
-  <strong>The open-source desktop workspace for agentic development workflows.</strong>
+  <strong>An open-source, local-model-first desktop app for agentic coding workflows.</strong>
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> •
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#architecture">Architecture</a> •
-  <a href="#contributing">Contributing</a>
+  <a href="https://github.com/samhu1/openagent/blob/master/LICENSE">MIT License</a>
+  ·
+  <a href="https://github.com/samhu1/openagent/blob/master/CONTRIBUTING.md">Contributing</a>
+  ·
+  <a href="https://github.com/samhu1/openagent/blob/master/SECURITY.md">Security</a>
 </p>
 
-## Introduction
+---
 
-OAgent is a powerful open-source Electron desktop client designed to streamline agentic workflows. Built to support the Agent Client Protocol (ACP) and seamlessly integrate with Model Context Protocol (MCP) tools, OAgent provides a unified workspace to interact natively with your code, models, and tools.
+## What Is OAgent?
 
-With native access to the system filesystem, a built-in terminal multiplexer, a web browser capability, and Git tooling out-of-the-box, OAgent transforms the way you pair-program with AI agents.
+OAgent is an open-source Electron desktop app built for local-first, agentic software engineering workflows.
 
-## Features
+It is designed for developers who want a coding agent environment that runs locally, stays extensible, and remains transparent. OAgent combines:
 
-- **Multi-session Workspace:** Run multiple concurrent agent sessions seamlessly with persistent chat histories.
-- **Background Agents:** Execute multi-turn tasks via async background agents, keeping your main interface ready for new commands.
-- **Provider Support:** Natively supports OpenRouter, Ollama, and customizable local workflows.
-- **Deep Integrations:** A native terminal panel, file inspector, Markdown diff viewer, and integrated browser right within the tool loop.
-- **MCP Tooling:** First-class extensibility with dynamic Model Context Protocol (MCP) renderer registration.
-- **Local Privacy:** Projects, session states, and workspace settings are saved locally to your filesystem, offering total data control and privacy.
+- Multi-session chat and workspace context
+- Native local tooling (Git, files, terminal, browser, MCP)
+- Local-model support via Ollama plus provider flexibility (OpenRouter and protocol-based runtimes)
+- Local-first project/session persistence
+
+OAgent is intended to be a practical open-source base for a local model AI agentic coding app, while still supporting cloud/model-provider workflows when needed.
+
+## Why OAgent
+
+- **One place for agent + tools**: code conversations, tool calls, and project context in a unified interface.
+- **Desktop-native behavior**: filesystem, terminal, and Git integrations without browser sandbox limitations.
+- **Session continuity**: persistent projects/sessions with recovery and restore flows.
+- **Protocol-aware runtime**: support for both the Agent SDK runtime and OAP/ACP-style runtime flows in the app.
+- **Extensible by design**: MCP server management and custom tool rendering patterns.
+
+## Core Capabilities
+
+- Multiple concurrent agent sessions
+- Background task/agent activity streams
+- Tool call rendering with structured outputs
+- Files panel with quick open-in-editor actions
+- Git panel with status, staging, commit, and branch operations
+- Terminal panel with PTY-backed sessions
+- Browser panel for web-assisted coding tasks
+- MCP controls and status inspection
+- Compact mode and permission-mode workflows for safe automation
+
+## Architecture Snapshot
+
+OAgent is split into Electron main/preload + React renderer:
+
+- **Electron main** (`/electron/src/main.ts`)
+  - Window lifecycle
+  - IPC handler registration
+  - Native integrations (terminal, files, Git, MCP)
+- **Electron preload** (`/electron/src/preload.ts`)
+  - Typed bridge via `window.clientCore`
+- **Renderer app** (`/src`)
+  - Feature-sliced UI modules (`chat`, `tools`, `workspace`)
+  - Runtime hooks for streaming/session state
+  - Domain/core abstractions for settings and orchestration
+
+Runtime support currently includes:
+
+- **Anthropic Agent SDK path** (`@anthropic-ai/claude-agent-sdk`) for agent session flows
+- **OAP runtime path** (`@agentclientprotocol/sdk`) for protocol-native sessions
+
+See:
+
+- [`docs/architecture.md`](docs/architecture.md)
+- [`docs/development.md`](docs/development.md)
 
 ## Quick Start
 
@@ -32,11 +78,9 @@ With native access to the system filesystem, a built-in terminal multiplexer, a 
 
 - Node.js 20+
 - pnpm 10+
-- macOS, Windows, or Linux
+- macOS / Windows / Linux
 
-### Installation
-
-Clone the repository and install the dependencies to get started:
+### Install
 
 ```bash
 git clone https://github.com/samhu1/openagent.git
@@ -44,50 +88,100 @@ cd openagent
 pnpm install
 ```
 
-### Running the Application
-
-Start the development server with Hot Module Replacement (HMR) for both the renderer process and the main process:
+### Run (dev)
 
 ```bash
 pnpm dev
 ```
 
-### Local Models (Optional)
+This starts:
 
-If you'd like to use a local model such as Llama 3 for inference with Ollama:
+- Vite renderer dev server
+- Electron main/preload build watch
+- Electron app window
 
-```bash
-ollama run llama3.2
-```
-
-### Production Build
-
-Package the application for distribution based on your current OS:
+### Build
 
 ```bash
 pnpm build
+```
+
+### Package distributables
+
+```bash
 pnpm dist
 ```
 
-## Documentation
+Platform-specific packaging:
 
-Dive deeper into our internals to extend or build upon OAgent:
+```bash
+pnpm dist:mac
+pnpm dist:win
+pnpm dist:linux
+```
 
-- [**Architecture & Design**](docs/architecture.md) - Learn about Electron IPC layering, Subagent routing, Context compaction, and the MCP registry.
-- [**Development Guide**](docs/development.md) - Open-source readiness checklists, command references, and core workflows.
-- [**Contributing Guidelines**](CONTRIBUTING.md) - Pull request expectations and repository conventions.
-- [**Code of Conduct**](CODE_OF_CONDUCT.md) - Community standards.
+## Runtime Setup
 
-## Troubleshooting
+### OpenRouter
 
-- **Dependencies:** If startup fails after dependency updates, ensure a clean state using `pnpm install --frozen-lockfile`.
-- **Electron Reloads:** If Electron hangs after major renderer structural changes, rebuild the Electron target using `pnpm build:electron`.
-- Consult our [**Support**](SUPPORT.md) guide if you continue experiencing issues.
+Set your OpenRouter key in app settings (`OpenRouter Key`) and choose a model.
+
+### Ollama (optional local inference)
+
+Install Ollama and pull at least one model:
+
+```bash
+ollama pull llama3.2
+```
+
+Then configure the Ollama endpoint/model in OAgent settings.
+
+## Developer Scripts
+
+| Script | Purpose |
+| --- | --- |
+| `pnpm dev` | Start renderer + Electron in development mode |
+| `pnpm build:electron` | Build Electron main/preload bundle |
+| `pnpm build` | Production build for Electron + renderer |
+| `pnpm start` | Launch packaged app entry locally |
+| `pnpm dist` | Build distributables via electron-builder |
+| `./scripts/oss-check.sh` | Typecheck, build, audit, and basic secret scan |
+
+## Repository Structure
+
+```text
+electron/         # Main process, preload, IPC handlers, native integration glue
+src/              # React renderer app
+docs/             # Architecture, development, release process notes
+build/            # Packaging assets (icons, entitlements)
+scripts/          # Build/release helper scripts
+```
+
+## Contributing
+
+Contributions are welcome. Before opening a PR:
+
+1. Read [`CONTRIBUTING.md`](CONTRIBUTING.md)
+2. Run:
+
+```bash
+pnpm exec tsc --noEmit
+pnpm build
+```
+
+3. Include validation notes and screenshots for UI changes
 
 ## Security
 
-Please refer to our [**Security Policy**](SECURITY.md) for how to responsibly report vulnerabilities. Do not file open issues for suspected security concerns.
+Please report vulnerabilities privately per [`SECURITY.md`](SECURITY.md).  
+Do not open public security issues.
+
+## Support and Community
+
+- [`SUPPORT.md`](SUPPORT.md) for support expectations
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community guidelines
+- [`MAINTAINERS.md`](MAINTAINERS.md) for maintainer contacts
 
 ## License
 
-OAgent is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License. See [`LICENSE`](LICENSE).

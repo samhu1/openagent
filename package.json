@@ -31,7 +31,7 @@
     "diff": "^8.0.3",
     "electron-liquid-glass": "^1.1.1",
     "electron-updater": "^6.8.3",
-    "lucide-react": "^0.563.0",
+    "lucide-react": "^0.575.0",
     "node-pty": "^1.1.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.4",

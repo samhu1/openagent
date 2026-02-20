@@ -1,62 +1,97 @@
-# OAgent
+<div align="center">
+  <img src=".github/banner.png" alt="OAgent Banner" />
+</div>
 
-OAgent is a desktop workspace for running coding agents, tools, and project context in one place.
+<h1 align="center">OAgent</h1>
+
+<p align="center">
+  <strong>The open-source desktop workspace for agentic development workflows.</strong>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#contributing">Contributing</a>
+</p>
+
+## Introduction
+
+OAgent is a powerful open-source Electron desktop client designed to streamline agentic workflows. Built to support the Agent Client Protocol (ACP) and seamlessly integrate with Model Context Protocol (MCP) tools, OAgent provides a unified workspace to interact natively with your code, models, and tools.
+
+With native access to the system filesystem, a built-in terminal multiplexer, a web browser capability, and Git tooling out-of-the-box, OAgent transforms the way you pair-program with AI agents.
 
 ## Features
 
-- Multiple concurrent agent sessions
-- OpenRouter, Ollama, and local workflow support
-- Integrated terminal, git, files, browser, and MCP tooling
-- Local persistence for sessions, projects, spaces, and settings
+- **Multi-session Workspace:** Run multiple concurrent agent sessions seamlessly with persistent chat histories.
+- **Background Agents:** Execute multi-turn tasks via async background agents, keeping your main interface ready for new commands.
+- **Provider Support:** Natively supports OpenRouter, Ollama, and customizable local workflows.
+- **Deep Integrations:** A native terminal panel, file inspector, Markdown diff viewer, and integrated browser right within the tool loop.
+- **MCP Tooling:** First-class extensibility with dynamic Model Context Protocol (MCP) renderer registration.
+- **Local Privacy:** Projects, session states, and workspace settings are saved locally to your filesystem, offering total data control and privacy.
 
-## Tech stack
-
-- Electron + React + TypeScript
-- Vite + tsup
-- ACP/MCP integration
-
-## Quick start
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 20+
 - pnpm 10+
+- macOS (Tahoe+ recommended for Liquid Glass transparency), Windows, or Linux
 
-### Install and run
+### Installation
+
+Clone the repository and install the dependencies to get started:
 
 ```bash
+git clone https://github.com/samhu1/openagent.git
+cd openagent
 pnpm install
+```
+
+### Running the Application
+
+Start the development server with Hot Module Replacement (HMR) for both the renderer process and the main process:
+
+```bash
 pnpm dev
 ```
 
-### Optional local model setup
+### Local Models (Optional)
 
-If you want to use local models through Ollama:
+If you'd like to use a local model such as Llama 3 for inference with Ollama:
 
 ```bash
-ollama pull llama3.2
+ollama run llama3.2
 ```
 
-### Build
+### Production Build
+
+Package the application for distribution based on your current OS:
 
 ```bash
 pnpm build
 pnpm dist
 ```
 
+## Documentation
+
+Dive deeper into our internals to extend or build upon OAgent:
+
+- [**Architecture & Design**](docs/architecture.md) - Learn about Electron IPC layering, Subagent routing, Context compaction, and the MCP registry.
+- [**Development Guide**](docs/development.md) - Open-source readiness checklists, command references, and core workflows.
+- [**Contributing Guidelines**](CONTRIBUTING.md) - Pull request expectations and repository conventions.
+- [**Code of Conduct**](CODE_OF_CONDUCT.md) - Community standards.
+
 ## Troubleshooting
 
-- If dev startup fails after dependency updates, run `pnpm install --frozen-lockfile`.
-- If Electron fails to load after a frontend refactor, rerun `pnpm build:electron`.
-
-## Contributing
-
-See `CONTRIBUTING.md` for development workflow and PR expectations.
+- **Dependencies:** If startup fails after dependency updates, ensure a clean state using `pnpm install --frozen-lockfile`.
+- **Electron Reloads:** If Electron hangs after major renderer structural changes, rebuild the Electron target using `pnpm build:electron`.
+- Consult our [**Support**](SUPPORT.md) guide if you continue experiencing issues.
 
 ## Security
 
-See `SECURITY.md` for responsible disclosure.
+Please refer to our [**Security Policy**](SECURITY.md) for how to responsibly report vulnerabilities. Do not file open issues for suspected security concerns.
 
 ## License
 
-MIT - see `LICENSE`.
+OAgent is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

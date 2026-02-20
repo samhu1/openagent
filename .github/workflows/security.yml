@@ -40,4 +40,25 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: pnpm audit
-        run: pnpm audit --audit-level moderate
+        shell: bash
+        run: |
+          set +e
+          output="$(pnpm audit --audit-level moderate 2>&1)"
+          status=$?
+          set -e
+
+          echo "$output"
+
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+
+          # npm audit API occasionally returns 500 and pnpm surfaces it as
+          # ERR_PNPM_AUDIT_BAD_RESPONSE. Do not fail CI for transient upstream outages.
+          if echo "$output" | grep -q "ERR_PNPM_AUDIT_BAD_RESPONSE"; then
+            echo "Skipping failure due to transient npm audit endpoint outage."
+            exit 0
+          fi
+
+          # Preserve failures for real audit findings or other errors.
+          exit "$status"

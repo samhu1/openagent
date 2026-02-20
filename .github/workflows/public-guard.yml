@@ -1,0 +1,25 @@
+name: Public Guard
+
+on:
+  pull_request:
+    branches:
+      - 'public/**'
+      - public-main
+  push:
+    branches:
+      - 'public/**'
+      - public-main
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block forbidden private paths
+        run: |
+          set -euo pipefail
+          FORBIDDEN='(^|/)\.claude/|(^|/)logs/|(^|/)random-notes\.md$|(^|/)text$'
+          if git ls-files | grep -E "$FORBIDDEN"; then
+            echo "Forbidden private files detected in public branch." >&2
+            exit 1
+          fi

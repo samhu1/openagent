@@ -554,7 +554,7 @@ function CCSessionList({
   if (sessions.length === 0) {
     return (
       <p className="px-3 py-2 text-xs text-muted-foreground">
-        No Claude Code sessions found
+        No chats yet
       </p>
     );
   }

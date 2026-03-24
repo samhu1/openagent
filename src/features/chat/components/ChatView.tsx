@@ -1,4 +1,5 @@
 import { useEffect, useRef, useMemo, useCallback, memo } from "react";
+import { Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { UIMessage } from "@/types";
 import { MessageBubble } from "@/components/MessageBubble";
@@ -7,12 +8,19 @@ import { ToolCall } from "@/features/tools";
 
 interface ChatViewProps {
   messages: UIMessage[];
+  isProcessing: boolean;
   extraBottomPadding?: boolean;
   scrollToMessageId?: string;
   onScrolledToMessage?: () => void;
 }
 
-export const ChatView = memo(function ChatView({ messages, extraBottomPadding, scrollToMessageId, onScrolledToMessage }: ChatViewProps) {
+export const ChatView = memo(function ChatView({
+  messages,
+  isProcessing,
+  extraBottomPadding,
+  scrollToMessageId,
+  onScrolledToMessage,
+}: ChatViewProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef(0);
@@ -92,6 +100,17 @@ export const ChatView = memo(function ChatView({ messages, extraBottomPadding, s
     return ids;
   }, [messages]);
 
+  const activePromptId = useMemo(() => {
+    if (!isProcessing) return null;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const msg = messages[i];
+      if (msg.role !== "user") continue;
+      const hasAssistantAfter = messages.slice(i + 1).some((next) => next.role === "assistant");
+      return hasAssistantAfter ? null : msg.id;
+    }
+    return null;
+  }, [messages, isProcessing]);
+
   if (messages.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center text-muted-foreground">
@@ -123,6 +142,19 @@ export const ChatView = memo(function ChatView({ messages, extraBottomPadding, s
                 message={msg}
                 isContinuation={continuationIds.has(msg.id)}
               />
+              {msg.id === activePromptId && (
+                <div className="flex justify-end px-0 pb-1.5">
+                  <div className="max-w-[76%] pe-1">
+                    <span
+                      aria-live="polite"
+                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                    >
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Processing
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}

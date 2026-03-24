@@ -64,6 +64,8 @@ export interface Settings {
   setPermissionMode: (mode: string) => void;
   thinking: boolean;
   setThinking: (on: boolean) => void;
+  continuousMode: boolean;
+  setContinuousMode: (on: boolean) => void;
 
   // Provider settings
   llmProvider: "openrouter" | "ollama";
@@ -148,6 +150,14 @@ export function useSettings(projectId: string | null): Settings {
   const setThinking = useCallback((on: boolean) => {
     setThinkingRaw(on);
     localStorage.setItem("oagent-thinking", String(on));
+  }, []);
+
+  const [continuousMode, setContinuousModeRaw] = useState(() =>
+    readBool("oagent-continuous-mode", false),
+  );
+  const setContinuousMode = useCallback((on: boolean) => {
+    setContinuousModeRaw(on);
+    localStorage.setItem("oagent-continuous-mode", String(on));
   }, []);
 
   // ── Provider settings ──
@@ -412,6 +422,8 @@ export function useSettings(projectId: string | null): Settings {
     setPermissionMode,
     thinking,
     setThinking,
+    continuousMode,
+    setContinuousMode,
     llmProvider,
     setLlmProvider,
     openRouterKey,

@@ -1,20 +1,41 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/features/workspace";
 import { AppSidebar } from "@/features/workspace";
-import { ChatHeader, ChatView, InputBar, PermissionPrompt, TodoPanel, WelcomeScreen } from "@/features/chat";
+import {
+  ChatHeader,
+  ChatView,
+  InputBar,
+  PermissionPrompt,
+  TodoPanel,
+  WelcomeScreen,
+} from "@/features/chat";
 import { BackgroundAgentsPanel } from "./BackgroundAgentsPanel";
-import { ToolsPanel, BrowserPanel, GitPanel, FilesPanel, McpPanel, ToolPicker } from "@/features/tools";
+import {
+  ToolsPanel,
+  BrowserPanel,
+  GitPanel,
+  FilesPanel,
+  McpPanel,
+  SecurityPanel,
+  LocalDevPanel,
+  UIEditorPanel,
+} from "@/features/tools";
 import type { ToolId } from "@/features/tools";
 import { SettingsDialog } from "./SettingsDialog";
 import { useBackgroundAgents } from "@/hooks/useBackgroundAgents";
 import { useOAgentRegistry } from "@/core/agents/hooks/useAgentCatalog";
-import type {
-  TodoItem,
-  ImageAttachment,
-  AgentDefinition,
-} from "@/types";
+import type { TodoItem, ImageAttachment, AgentDefinition } from "@/types";
 
 export function AppLayout() {
   const {
@@ -45,22 +66,22 @@ export function AppLayout() {
     [manager.setDraftAgent],
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameDraft, setRenameDraft] = useState("");
   const [scrollToMessageId, setScrollToMessageId] = useState<
     string | undefined
   >();
   const [isResizing, setIsResizing] = useState(false);
-  const [pinnedSessionIds, setPinnedSessionIds] = useState<Set<string>>(
-    () => {
-      try {
-        const raw = localStorage.getItem("oagent-pinned-session-ids");
-        if (!raw) return new Set();
-        const parsed = JSON.parse(raw);
-        return new Set(Array.isArray(parsed) ? parsed : []);
-      } catch {
-        return new Set();
-      }
-    },
-  );
+  const [pinnedSessionIds, setPinnedSessionIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem("oagent-pinned-session-ids");
+      if (!raw) return new Set();
+      const parsed = JSON.parse(raw);
+      return new Set(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      return new Set();
+    }
+  });
 
   const hasProjects = projectManager.projects.length > 0;
 
@@ -106,32 +127,11 @@ export function AppLayout() {
 
   const handleSend = useCallback(
     async (text: string, images?: ImageAttachment[]) => {
-      // If the selected agent's engine differs from the current session, start a new session first
-      const currentEngine = manager.activeSession?.engine ?? "agent";
-      const wantedEngine = selectedAgent?.engine ?? "agent";
-      if (
-        !manager.isDraft &&
-        currentEngine !== wantedEngine &&
-        manager.activeSession
-      ) {
-        await manager.createSession(manager.activeSession.projectId, {
-          model: effectiveModel,
-          permissionMode: settings.permissionMode,
-          engine: wantedEngine,
-          agentId: selectedAgent?.id ?? "oagent-core",
-        });
-      }
+      // Never fork a new session on send for active chats.
+      // Engine/agent changes should apply to new drafts/new chats only.
       await manager.send(text, images);
     },
-    [
-      manager.send,
-      manager.isDraft,
-      manager.activeSession,
-      manager.createSession,
-      selectedAgent,
-      effectiveModel,
-      settings.permissionMode,
-    ],
+    [manager.send],
   );
 
   const handleModelChange = useCallback(
@@ -209,12 +209,20 @@ export function AppLayout() {
   const handleRenameSessionFromHeader = useCallback(() => {
     const session = manager.activeSession;
     if (!session) return;
-    const proposed = window.prompt("Rename session", session.title);
-    if (!proposed) return;
-    const trimmed = proposed.trim();
-    if (!trimmed || trimmed === session.title) return;
-    manager.renameSession(session.id, trimmed);
+    setRenameDraft(session.title);
+    setRenameDialogOpen(true);
   }, [manager.activeSession, manager.renameSession]);
+
+  const handleSubmitRenameSession = useCallback(() => {
+    const session = manager.activeSession;
+    if (!session) return;
+    const trimmed = renameDraft.trim();
+    if (!trimmed) return;
+    if (trimmed !== session.title) {
+      manager.renameSession(session.id, trimmed);
+    }
+    setRenameDialogOpen(false);
+  }, [manager.activeSession, manager.renameSession, renameDraft]);
 
   // Sync model from loaded session
   useEffect(() => {
@@ -226,6 +234,11 @@ export function AppLayout() {
       settings.setModel(session.model);
     }
   }, [manager.activeSessionId, manager.isDraft, manager.sessions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!renameDialogOpen) return;
+    setRenameDraft(manager.activeSession?.title ?? "");
+  }, [renameDialogOpen, manager.activeSession?.title]);
 
   // Derive the latest todo list from the most recent TodoWrite tool call
   const activeTodos = useMemo(() => {
@@ -421,21 +434,44 @@ export function AppLayout() {
   }, [activeTools, settings]);
 
   return (
-      <div className="relative flex h-screen overflow-hidden bg-sidebar text-foreground">
-      {manager.activeSessionId && (
-        <div
-          className="fixed right-4 top-3 z-[70] no-drag pointer-events-auto"
-          style={{ WebkitAppRegion: "no-drag" } as CSSProperties}
-          onMouseDownCapture={(e) => e.stopPropagation()}
-          onPointerDownCapture={(e) => e.stopPropagation()}
-        >
-          <ToolPicker
-            activeTools={activeTools}
-            onToggle={handleToggleTool}
-            availableContextual={availableContextual}
-          />
-        </div>
-      )}
+    <div className="relative flex h-screen overflow-hidden bg-sidebar text-foreground">
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename Thread</DialogTitle>
+            <DialogDescription>
+              Update the title shown in the sidebar and header.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmitRenameSession();
+            }}
+            className="space-y-4"
+          >
+            <Input
+              autoFocus
+              value={renameDraft}
+              onChange={(e) => setRenameDraft(e.target.value)}
+              placeholder="Thread title"
+              maxLength={120}
+            />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRenameDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!renameDraft.trim()}>
+                Save
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <AppSidebar
         isOpen={sidebar.isOpen}
@@ -479,6 +515,9 @@ export function AppLayout() {
                   projectPath={activeProjectPath}
                   onTogglePin={handleTogglePinSession}
                   onRenameSession={handleRenameSessionFromHeader}
+                  activeTools={activeTools}
+                  onToggleTool={handleToggleTool}
+                  availableContextual={availableContextual}
                 />
               </div>
               <ChatView
@@ -602,7 +641,10 @@ export function AppLayout() {
           activeTools.has("browser") ||
           activeTools.has("git") ||
           activeTools.has("files") ||
-          activeTools.has("mcp")) &&
+          activeTools.has("mcp") ||
+          activeTools.has("security") ||
+          activeTools.has("local-dev") ||
+          activeTools.has("ui-editor")) &&
           manager.activeSessionId && (
             <>
               {/* Resize handle */}
@@ -652,7 +694,10 @@ export function AppLayout() {
                       ),
                     });
                   if (activeTools.has("browser"))
-                    toolOrder.push({ id: "browser", node: <BrowserPanel /> });
+                    toolOrder.push({
+                      id: "browser",
+                      node: <BrowserPanel onSendToAgent={handleSend} />,
+                    });
                   if (activeTools.has("files"))
                     toolOrder.push({
                       id: "files",
@@ -676,6 +721,36 @@ export function AppLayout() {
                           onRefreshStatus={manager.refreshMcpStatus}
                           onReconnect={manager.reconnectMcpServer}
                           onRestartWithServers={manager.restartWithMcpServers}
+                        />
+                      ),
+                    });
+                  if (activeTools.has("security"))
+                    toolOrder.push({
+                      id: "security",
+                      node: (
+                        <SecurityPanel
+                          cwd={activeProjectPath}
+                          onSendToAgent={handleSend}
+                        />
+                      ),
+                    });
+                  if (activeTools.has("local-dev"))
+                    toolOrder.push({
+                      id: "local-dev",
+                      node: (
+                        <LocalDevPanel
+                          cwd={activeProjectPath}
+                          onSendToAgent={handleSend}
+                        />
+                      ),
+                    });
+                  if (activeTools.has("ui-editor"))
+                    toolOrder.push({
+                      id: "ui-editor",
+                      node: (
+                        <UIEditorPanel
+                          cwd={activeProjectPath}
+                          onSendToAgent={handleSend}
                         />
                       ),
                     });
@@ -718,7 +793,6 @@ export function AppLayout() {
               </div>
             </>
           )}
-
       </div>
 
       <SettingsDialog

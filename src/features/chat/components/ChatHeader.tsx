@@ -1,5 +1,12 @@
 import { memo, useState, useEffect } from "react";
-import { Loader2, MoreHorizontal, PanelLeft, Pin, PinOff, PencilLine } from "lucide-react";
+import {
+  Loader2,
+  MoreHorizontal,
+  PanelLeft,
+  Pin,
+  PinOff,
+  PencilLine,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +20,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ToolPicker,
+  type ToolId,
+} from "@/features/tools/components/ToolPicker";
 
 const PERMISSION_MODE_LABELS: Record<string, string> = {
   plan: "Plan",
@@ -35,6 +46,9 @@ interface ChatHeaderProps {
   onToggleSidebar: () => void;
   onRenameSession?: () => void;
   onTogglePin?: () => void;
+  activeTools?: Set<ToolId>;
+  onToggleTool?: (toolId: ToolId) => void;
+  availableContextual?: Set<ToolId>;
 }
 
 export const ChatHeader = memo(function ChatHeader({
@@ -50,6 +64,9 @@ export const ChatHeader = memo(function ChatHeader({
   onToggleSidebar,
   onRenameSession,
   onTogglePin,
+  activeTools,
+  onToggleTool,
+  availableContextual,
 }: ChatHeaderProps) {
   const modeLabel = permissionMode
     ? PERMISSION_MODE_LABELS[permissionMode]
@@ -155,7 +172,7 @@ export const ChatHeader = memo(function ChatHeader({
 
       <div className="ms-auto flex items-center gap-3">
         {totalCost > 0 && (
-          <span className="text-xs text-muted-foreground tabular-nums">
+          <span className="text-[10px] font-bold text-foreground/30 tabular-nums uppercase tracking-widest">
             ${totalCost.toFixed(4)}
           </span>
         )}
@@ -163,25 +180,40 @@ export const ChatHeader = memo(function ChatHeader({
         {sessionId && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="no-drag cursor-default text-xs text-muted-foreground/60 tabular-nums">
+              <span className="no-drag cursor-default text-[10px] font-bold text-foreground/20 tabular-nums uppercase tracking-widest">
                 {sessionId.slice(0, 8)}
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="font-mono text-xs">{sessionId}</p>
+              <p className="font-mono text-[10px] uppercase tracking-tighter">
+                {sessionId}
+              </p>
             </TooltipContent>
           </Tooltip>
         )}
 
         {diffStats && (diffStats.insertions > 0 || diffStats.deletions > 0) && (
-          <div className="flex items-center gap-1.5 no-drag text-xs font-mono font-medium">
+          <div className="flex items-center gap-1.5 no-drag text-[10px] font-mono font-bold tracking-tighter">
             {diffStats.insertions > 0 && (
-              <span className="text-emerald-500">+{diffStats.insertions}</span>
+              <span className="text-foreground/40">
+                +{diffStats.insertions}
+              </span>
             )}
             {diffStats.deletions > 0 && (
-              <span className="text-red-500">-{diffStats.deletions}</span>
+              <span className="text-foreground/20">-{diffStats.deletions}</span>
             )}
           </div>
+        )}
+
+        {activeTools && onToggleTool && (
+          <>
+            <div className="h-4 w-px bg-foreground/5 mx-1" />
+            <ToolPicker
+              activeTools={activeTools}
+              onToggle={onToggleTool}
+              availableContextual={availableContextual}
+            />
+          </>
         )}
       </div>
     </div>

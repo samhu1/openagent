@@ -145,6 +145,25 @@ export const SettingsDialog = memo(function SettingsDialog({
 
             <div className="flex items-center justify-between p-4 rounded-lg border border-border/40 bg-muted/10 hover-lift">
               <div className="space-y-0.5">
+                <div className="text-sm font-medium">Continuous Mode</div>
+                <div className="text-xs text-muted-foreground">
+                  Agent automatically finds and works on the next task without
+                  stopping
+                </div>
+              </div>
+              <Button
+                variant={settings.continuousMode ? "default" : "outline"}
+                size="sm"
+                onClick={() =>
+                  settings.setContinuousMode(!settings.continuousMode)
+                }
+              >
+                {settings.continuousMode ? "Enabled" : "Disabled"}
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between p-4 rounded-lg border border-border/40 bg-muted/10 hover-lift">
+              <div className="space-y-0.5">
                 <div className="text-sm font-medium">Permission Mode</div>
                 <div className="text-xs text-muted-foreground">
                   Global model execution policy

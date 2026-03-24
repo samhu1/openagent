@@ -57,11 +57,39 @@ export function useSessionManager(projects: Project[], settings: Settings) {
     if (cost) settings.addCumulativeCost(cost);
   }, [settings]);
 
+  const engineSendRef = useRef<((txt: string) => void) | null>(null);
+
+  const onTurnComplete = useCallback(() => {
+    if (!settingsRef.current.continuousMode) return;
+    const activeId = activeSessionIdRef.current;
+    if (!activeId || activeId === DRAFT_ID) return;
+
+    // To prevent infinite loops when it explicitly asks the user for input via a proposal block
+    const msgs = messagesRef.current;
+    const lastAssistant = msgs.findLast((m) => m.role === "assistant" || m.role === "tool_call");
+    // Also stop if there is an error
+    const hasError = msgs.some((m) => m.toolError);
+    if (hasError) return;
+
+    if (lastAssistant?.role === "assistant" && lastAssistant.content.includes("```proposal")) {
+      return; // Stop looping if it proposed next steps
+    }
+
+    // Agent has finished its turn. Ping it to continue.
+    // Wrap in setTimeout to ensure state like isProcessing is fully settled
+    setTimeout(() => {
+       if (engineSendRef.current) {
+         engineSendRef.current("Task complete. Please evaluate the next most important feature or bug fix and begin implementing it immediately. If you need user input or want to propose options, explicitly output a ```proposal\n- Option 1\n- Option 2\n``` block.");
+       }
+    }, 100);
+  }, []);
+
   const agent = useOAgent({
     sessionId: agentSessionId,
     initialMessages: isOAP ? [] : initialMessages,
     initialMeta: isOAP ? null : initialMeta,
     onUsageUpdate,
+    onTurnComplete,
   });
   const oap = useOAP({
     sessionId: oapSessionId,
@@ -74,6 +102,21 @@ export function useSessionManager(projects: Project[], settings: Settings) {
   // Pick the active engine's state
   const engine = isOAP ? oap : agent;
   const { messages, totalCost, sessionInfo } = engine;
+  
+  useEffect(() => {
+    engineSendRef.current = engine.send;
+  }, [engine.send]);
+
+  useEffect(() => {
+    const handleGlobalSend = (e: Event) => {
+      const ce = e as CustomEvent<string>;
+      if (ce.detail && engineSendRef.current) {
+        engineSendRef.current(ce.detail);
+      }
+    };
+    window.addEventListener("oagent:send", handleGlobalSend);
+    return () => window.removeEventListener("oagent:send", handleGlobalSend);
+  }, []);
 
   const liveSessionIdsRef = useRef<Set<string>>(new Set());
   const messagesRef = useRef(messages);

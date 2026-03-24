@@ -171,6 +171,8 @@ pnpm build
 
 3. Include validation notes and screenshots for UI changes
 
+Contributor recognition lives in [`CONTRIBUTORS.md`](CONTRIBUTORS.md). First-time contributors can be featured there after their first merged PR.
+
 ## Security
 
 Please report vulnerabilities privately per [`SECURITY.md`](SECURITY.md).  
@@ -181,6 +183,8 @@ Do not open public security issues.
 - [`SUPPORT.md`](SUPPORT.md) for support expectations
 - [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community guidelines
 - [`MAINTAINERS.md`](MAINTAINERS.md) for maintainer contacts
+- [`CONTRIBUTORS.md`](CONTRIBUTORS.md) for contributor spotlight and hall of contributors
+- [`docs/starter-issues.md`](docs/starter-issues.md) for contributor-friendly backlog ideas
 - [`docs/open-source-readiness.md`](docs/open-source-readiness.md) for pre-public checklist
 
 ## License

@@ -1,9 +1,33 @@
 import { memo, useMemo, type CSSProperties } from "react";
-import { GitBranch, FileText, ListTodo, Bot, Plug, type LucideIcon } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  GitBranch,
+  FileText,
+  ListTodo,
+  Bot,
+  Plug,
+  ShieldAlert,
+  Server,
+  Monitor,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 
-export type ToolId = "terminal" | "browser" | "git" | "files" | "tasks" | "agents" | "mcp";
+export type ToolId =
+  | "terminal"
+  | "browser"
+  | "git"
+  | "files"
+  | "tasks"
+  | "agents"
+  | "mcp"
+  | "security"
+  | "local-dev"
+  | "ui-editor";
 
 interface ToolDef {
   id: ToolId;
@@ -12,6 +36,9 @@ interface ToolDef {
 }
 
 const PANEL_TOOLS: ToolDef[] = [
+  { id: "ui-editor", label: "UI Visual Editor", icon: Monitor },
+  { id: "local-dev", label: "Local Environment", icon: Server },
+  { id: "security", label: "Security Scanner", icon: ShieldAlert },
   { id: "git", label: "Source Control", icon: GitBranch },
   { id: "files", label: "Open Files", icon: FileText },
   { id: "mcp", label: "MCP Servers", icon: Plug },
@@ -29,7 +56,11 @@ interface ToolPickerProps {
   availableContextual?: Set<ToolId>;
 }
 
-export const ToolPicker = memo(function ToolPicker({ activeTools, onToggle, availableContextual }: ToolPickerProps) {
+export const ToolPicker = memo(function ToolPicker({
+  activeTools,
+  onToggle,
+  availableContextual,
+}: ToolPickerProps) {
   const visibleContextual = useMemo(
     () => CONTEXTUAL_TOOLS.filter((t) => availableContextual?.has(t.id)),
     [availableContextual],
@@ -62,7 +93,10 @@ export const ToolPicker = memo(function ToolPicker({ activeTools, onToggle, avai
                         : "text-foreground/38 hover:text-foreground/85 hover:bg-foreground/8"
                     }`}
                   >
-                    <Icon className="h-3.5 w-3.5" strokeWidth={isActive ? 2 : 1.75} />
+                    <Icon
+                      className="h-3.5 w-3.5"
+                      strokeWidth={isActive ? 2 : 1.75}
+                    />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" sideOffset={8}>
@@ -92,7 +126,10 @@ export const ToolPicker = memo(function ToolPicker({ activeTools, onToggle, avai
                     : "text-foreground/38 hover:text-foreground/85 hover:bg-foreground/8"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" strokeWidth={isActive ? 2 : 1.75} />
+                <Icon
+                  className="h-3.5 w-3.5"
+                  strokeWidth={isActive ? 2 : 1.75}
+                />
               </button>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={8}>

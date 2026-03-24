@@ -50,6 +50,7 @@ interface UseAgentOptions {
   initialMessages?: UIMessage[];
   initialMeta?: InitialMeta | null;
   onUsageUpdate?: (stats: { tokens?: number; cost?: number }) => void;
+  onTurnComplete?: () => void;
 }
 
 export function useOAgent({
@@ -57,6 +58,7 @@ export function useOAgent({
   initialMessages,
   initialMeta,
   onUsageUpdate,
+  onTurnComplete,
 }: UseAgentOptions) {
   const [messages, setMessages] = useState<UIMessage[]>(initialMessages ?? []);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -575,6 +577,7 @@ export function useOAgent({
           }
 
           resetStreaming();
+          onTurnComplete?.();
           break;
         }
 

@@ -122,6 +122,21 @@ pnpm dist:linux
 
 ## Runtime Setup
 
+### First Run Setup (packaged app users)
+
+If you downloaded a release build (`.dmg`, `.exe`, `.AppImage`), complete this once before your first prompt:
+
+1. Open **Settings** in OAgent.
+2. Configure **one** provider: **OpenRouter** or **Ollama**.
+3. Pick a model and save.
+
+Downloading and launching the app is not enough by itself; at least one provider must be configured before prompts can run.
+
+**OpenRouter vs Ollama (quick guide)**
+
+- **OpenRouter**: cloud-hosted models, easiest setup with an API key, requires internet.
+- **Ollama**: local models on your machine, more private/local-first, requires model download and local resources.
+
 ### OpenRouter
 
 Set your OpenRouter key in app settings (`OpenRouter Key`) and choose a model.

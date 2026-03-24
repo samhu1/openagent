@@ -10,3 +10,4 @@ release/
 .env.*
 !.env.example
 coverage/
+.tmp/

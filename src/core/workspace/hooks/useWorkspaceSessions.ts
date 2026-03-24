@@ -38,6 +38,15 @@ export function useSessionManager(projects: Project[], settings: Settings) {
   const [draftMcpStatuses, setDraftMcpStatuses] = useState<McpServerStatus[]>([]);
   const draftMcpStatusesRef = useRef<McpServerStatus[]>([]);
   draftMcpStatusesRef.current = draftMcpStatuses;
+  const mapMcpStatuses = useCallback(
+    (servers: Array<{ name: string; status: string; error?: string }> = []): McpServerStatus[] =>
+      servers.map((s) => ({
+        name: s.name,
+        status: toMcpStatusState(s.status),
+        ...(s.error ? { error: s.error } : {}),
+      })),
+    [],
+  );
   // OAP agent tracking — needed to restart the session with updated MCP servers
   const oapAgentIdRef = useRef<string | null>(null);
   // OAP-side session ID — persisted so we can call session/load on revival after restart
@@ -193,11 +202,8 @@ export function useSessionManager(projects: Project[], settings: Settings) {
       // couldn't match it (preStartedSessionIdRef was still null). Query MCP
       // status directly now that the session is initialized.
       const statusResult = await window.clientCore.mcpStatus(result.sessionId);
-      if (statusResult.servers?.length && preStartedSessionIdRef.current === result.sessionId) {
-        setDraftMcpStatuses(statusResult.servers.map(s => ({
-          name: s.name,
-          status: toMcpStatusState(s.status),
-        })));
+      if (preStartedSessionIdRef.current === result.sessionId) {
+        setDraftMcpStatuses(mapMcpStatuses(statusResult.servers ?? []));
       }
     } else {
       // Draft was abandoned before eager start completed
@@ -351,12 +357,7 @@ export function useSessionManager(projects: Project[], settings: Settings) {
         backgroundStoreRef.current.handleEvent(event);
         if (event.type === "system" && "subtype" in event && event.subtype === "init") {
           const init = event as SystemInitEvent;
-          if (init.mcp_servers?.length) {
-            setDraftMcpStatuses(init.mcp_servers.map(s => ({
-              name: s.name,
-              status: toMcpStatusState(s.status),
-            })));
-          }
+          setDraftMcpStatuses(mapMcpStatuses(init.mcp_servers ?? []));
         }
         return;
       }
@@ -987,6 +988,7 @@ export function useSessionManager(projects: Project[], settings: Settings) {
       setAcpMcpStatuses((result.mcpStatuses ?? []).map(s => ({
         name: s.name,
         status: toMcpStatusState(s.status),
+        ...(s.error ? { error: s.error } : {}),
       })));
       setInitialMessages(messagesRef.current);
       setInitialMeta({ isProcessing: false, isConnected: true, sessionInfo: null, totalCost: totalCostRef.current });
@@ -1258,9 +1260,13 @@ export function useSessionManager(projects: Project[], settings: Settings) {
     compact: engine.compact,
     oapConfigOptions: oap.configOptions,
     setOAPConfig: oap.setConfig,
-    mcpServerStatuses: isOAP
-      ? (oapMcpStatuses.length > 0 ? oapMcpStatuses : draftMcpStatuses)
-      : (agent.mcpServerStatuses.length > 0 ? agent.mcpServerStatuses : draftMcpStatuses),
+    mcpServerStatuses: isDraft
+      ? (
+          isOAP
+            ? (oapMcpStatuses.length > 0 ? oapMcpStatuses : draftMcpStatuses)
+            : (agent.mcpServerStatuses.length > 0 ? agent.mcpServerStatuses : draftMcpStatuses)
+        )
+      : (isOAP ? oapMcpStatuses : agent.mcpServerStatuses),
     mcpStatusPreliminary: isDraft && draftMcpStatuses.length > 0 && (
       isOAP ? oapMcpStatuses.length === 0 : agent.mcpServerStatuses.length === 0
     ),
@@ -1269,12 +1275,7 @@ export function useSessionManager(projects: Project[], settings: Settings) {
       : (preStartedSessionId && isDraft)
         ? (async () => {
             const result = await window.clientCore.mcpStatus(preStartedSessionId);
-            if (result.servers?.length) {
-              setDraftMcpStatuses(result.servers.map(s => ({
-                name: s.name,
-                status: toMcpStatusState(s.status),
-              })));
-            }
+            setDraftMcpStatuses(mapMcpStatuses(result.servers ?? []));
           })
         : agent.refreshMcpStatus,
     reconnectMcpServer: isOAP
@@ -1298,12 +1299,7 @@ export function useSessionManager(projects: Project[], settings: Settings) {
               await new Promise(r => setTimeout(r, 3000));
             }
             const statusResult = await window.clientCore.mcpStatus(preStartedSessionId);
-            if (statusResult.servers?.length) {
-              setDraftMcpStatuses(statusResult.servers.map(s => ({
-                name: s.name,
-                status: toMcpStatusState(s.status),
-              })));
-            }
+            setDraftMcpStatuses(mapMcpStatuses(statusResult.servers ?? []));
           })
         : agent.reconnectMcpServer,
     restartWithMcpServers: isOAP

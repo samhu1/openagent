@@ -43,6 +43,7 @@ const clientCoreApi = {
     ipcRenderer.invoke("oagent:mcp-reconnect", { sessionId, serverName }),
   restartSession: (sessionId: string, mcpServers?: unknown[]) =>
     ipcRenderer.invoke("oagent:restart-session", { sessionId, mcpServers }),
+  checkProviderSetup: (options: unknown) => ipcRenderer.invoke("oagent:check-provider-setup", options),
   readFile: (filePath: string) => ipcRenderer.invoke("file:read", filePath),
   openInEditor: (filePath: string, line?: number) => ipcRenderer.invoke("file:open-in-editor", { filePath, line }),
   generateTitle: (

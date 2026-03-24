@@ -189,6 +189,9 @@ declare global {
         authStatus: (serverName: string) => Promise<{ hasToken: boolean; expiresAt?: number }>;
         probe: (servers: McpServerConfig[]) => Promise<Array<{ name: string; status: "connected" | "needs-auth" | "failed"; error?: string }>>;
       };
+      debug: {
+        collect: () => Promise<{ report?: string; filePath?: string; error?: string }>;
+      };
       agents: {
         list: () => Promise<AgentDefinition[]>;
         save: (agent: AgentDefinition) => Promise<{ ok?: boolean; error?: string }>;

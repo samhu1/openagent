@@ -1,10 +1,12 @@
-import { memo } from "react";
+import { memo, useCallback, useState } from "react";
 import {
   Settings as SettingsIcon,
   Key,
   Cpu,
   ChevronRight,
   RefreshCcw,
+  Bug,
+  Copy,
 } from "lucide-react";
 import {
   Dialog,
@@ -28,6 +30,30 @@ export const SettingsDialog = memo(function SettingsDialog({
   onOpenChange,
   settings,
 }: SettingsDialogProps) {
+  const [debugInfoState, setDebugInfoState] = useState<"idle" | "copying" | "copied" | "error">("idle");
+  const [debugInfoMessage, setDebugInfoMessage] = useState("");
+
+  const handleCopyDebugInfo = useCallback(async () => {
+    setDebugInfoState("copying");
+    setDebugInfoMessage("");
+    try {
+      const result = await window.clientCore.debug.collect();
+      if (!result.report) {
+        throw new Error(result.error ?? "Unable to collect debug info.");
+      }
+      await navigator.clipboard.writeText(result.report);
+      setDebugInfoState("copied");
+      setDebugInfoMessage(
+        result.filePath
+          ? `Copied to clipboard. Local file: ${result.filePath}`
+          : "Copied to clipboard.",
+      );
+    } catch (err) {
+      setDebugInfoState("error");
+      setDebugInfoMessage(err instanceof Error ? err.message : "Unable to copy debug info.");
+    }
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] overflow-hidden border-border/40 bg-background/95 backdrop-blur-xl animate-scale-in">
@@ -188,6 +214,39 @@ export const SettingsDialog = memo(function SettingsDialog({
                 {settings.permissionMode}
                 <ChevronRight className="h-3 w-3" />
               </Button>
+            </div>
+
+            <div className="p-4 rounded-lg border border-border/40 bg-muted/10 space-y-3">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium flex items-center gap-2">
+                  <Bug className="h-3.5 w-3.5" />
+                  Bug Report Debug Info
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Collect sanitized diagnostics (no workspace file contents or secret values) and copy it for GitHub issues.
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={handleCopyDebugInfo}
+                  disabled={debugInfoState === "copying"}
+                >
+                  <Copy className="h-3 w-3" />
+                  {debugInfoState === "copying" ? "Collecting..." : "Copy Debug Info"}
+                </Button>
+                {debugInfoMessage ? (
+                  <span
+                    className={`text-[10px] text-right ${
+                      debugInfoState === "error" ? "text-destructive" : "text-muted-foreground"
+                    }`}
+                  >
+                    {debugInfoMessage}
+                  </span>
+                ) : null}
+              </div>
             </div>
           </TabsContent>
 

@@ -10,6 +10,14 @@ fs.mkdirSync(logsDir, { recursive: true });
 const logFile = path.join(logsDir, `main-${Date.now()}.log`);
 const logStream = fs.createWriteStream(logFile, { flags: "a" });
 
+export function getLogsDir(): string {
+  return logsDir;
+}
+
+export function getCurrentLogFile(): string {
+  return logFile;
+}
+
 export function log(label: string, data: unknown): void {
   const ts = new Date().toISOString();
   const line = typeof data === "string" ? data : JSON.stringify(data, null, 2);

@@ -985,11 +985,7 @@ export function useSessionManager(projects: Project[], settings: Settings) {
           ? { ...s, id: newId, agentSessionId: result.agentSessionId ?? s.agentSessionId }
           : s,
       ));
-      setAcpMcpStatuses((result.mcpStatuses ?? []).map(s => ({
-        name: s.name,
-        status: toMcpStatusState(s.status),
-        ...(s.error ? { error: s.error } : {}),
-      })));
+      setAcpMcpStatuses(mapMcpStatuses(result.mcpStatuses ?? []));
       setInitialMessages(messagesRef.current);
       setInitialMeta({ isProcessing: false, isConnected: true, sessionInfo: null, totalCost: totalCostRef.current });
       if (result.configOptions?.length) setInitialConfigOptions(result.configOptions);

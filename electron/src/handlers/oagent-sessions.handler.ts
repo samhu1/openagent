@@ -142,6 +142,26 @@ function inferProvider(llmProvider: StartOptions["llmProvider"], model?: string)
   return "agent";
 }
 
+async function checkOllamaReachability(endpointRaw?: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const endpoint = (endpointRaw || "http://localhost:11434").trim().replace(/\/+$/, "");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 2000);
+  try {
+    const res = await fetch(`${endpoint}/api/tags`, { signal: controller.signal });
+    if (!res.ok) {
+      return { ok: false, error: `Ollama endpoint returned ${res.status}. Start Ollama or update Settings → Ollama Endpoint.` };
+    }
+    return { ok: true };
+  } catch {
+    return {
+      ok: false,
+      error: `Ollama is not reachable at ${endpoint}. Start Ollama, fix the endpoint, or switch to OpenRouter in Settings.`,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function applyProviderOptions(
   queryOptions: Record<string, unknown>,
   {
@@ -449,6 +469,34 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     ipcMain.on(`oagent:${suffix}`, handler);
     ipcMain.on(`agent:${suffix}`, handler);
   };
+
+  handleBoth("check-provider-setup", async (_event, options: {
+    llmProvider?: "openrouter" | "ollama";
+    model?: string;
+    openRouterKey?: string;
+    ollamaEndpoint?: string;
+  }) => {
+    const provider = inferProvider(options?.llmProvider, options?.model);
+    if (provider === "openrouter") {
+      const key = (options?.openRouterKey || "").trim();
+      if (!key) {
+        return {
+          ok: false,
+          provider,
+          error: "OpenRouter API key missing. Add it in Settings → Models → OpenRouter API Key, or switch provider to Ollama.",
+        };
+      }
+      return { ok: true, provider };
+    }
+    if (provider === "ollama") {
+      const result = await checkOllamaReachability(options?.ollamaEndpoint);
+      if (!result.ok) {
+        return { ok: false, provider, error: result.error };
+      }
+      return { ok: true, provider };
+    }
+    return { ok: true, provider };
+  });
 
   handleBoth("start", async (_event, options: StartOptions = {}) => {
     const sessionId = options.resume || crypto.randomUUID();

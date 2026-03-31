@@ -1,5 +1,5 @@
 import { memo, useState, useEffect } from "react";
-import { Loader2, MoreHorizontal, PanelLeft, Pin, PinOff, PencilLine } from "lucide-react";
+import { MoreHorizontal, PanelLeft, Pin, PinOff, PencilLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -24,7 +24,6 @@ const PERMISSION_MODE_LABELS: Record<string, string> = {
 
 interface ChatHeaderProps {
   sidebarOpen: boolean;
-  isProcessing: boolean;
   model?: string;
   sessionId?: string;
   totalCost: number;
@@ -39,7 +38,6 @@ interface ChatHeaderProps {
 
 export const ChatHeader = memo(function ChatHeader({
   sidebarOpen,
-  isProcessing,
   model,
   sessionId,
   totalCost,
@@ -132,13 +130,6 @@ export const ChatHeader = memo(function ChatHeader({
             </DropdownMenu>
           )}
         </div>
-      )}
-
-      {isProcessing && (
-        <span className="no-drag flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin" />
-          Processing
-        </span>
       )}
 
       {model && (

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useMemo, useCallback, memo } from "react";
+import { Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { UIMessage } from "@/types";
 import { MessageBubble } from "@/components/MessageBubble";
@@ -7,12 +8,13 @@ import { ToolCall } from "@/features/tools";
 
 interface ChatViewProps {
   messages: UIMessage[];
+  isProcessing?: boolean;
   extraBottomPadding?: boolean;
   scrollToMessageId?: string;
   onScrolledToMessage?: () => void;
 }
 
-export const ChatView = memo(function ChatView({ messages, extraBottomPadding, scrollToMessageId, onScrolledToMessage }: ChatViewProps) {
+export const ChatView = memo(function ChatView({ messages, isProcessing, extraBottomPadding, scrollToMessageId, onScrolledToMessage }: ChatViewProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef(0);
@@ -126,6 +128,17 @@ export const ChatView = memo(function ChatView({ messages, extraBottomPadding, s
             </div>
           );
         })}
+        {isProcessing && (
+          <div
+            className="flex items-center gap-2 py-2 text-muted-foreground"
+            role="status"
+            aria-live="polite"
+            aria-label="Processing response"
+          >
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <span className="text-xs">Processing…</span>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
     </ScrollArea>

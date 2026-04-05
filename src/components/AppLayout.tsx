@@ -501,7 +501,6 @@ export function AppLayout() {
               <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-background">
                 <ChatHeader
                   sidebarOpen={sidebar.isOpen}
-                  isProcessing={manager.isProcessing}
                   model={manager.sessionInfo?.model}
                   sessionId={manager.sessionInfo?.sessionId}
                   totalCost={manager.totalCost}
@@ -522,6 +521,7 @@ export function AppLayout() {
               </div>
               <ChatView
                 messages={manager.messages}
+                isProcessing={manager.isProcessing}
                 extraBottomPadding={!!manager.pendingPermission}
                 scrollToMessageId={scrollToMessageId}
                 onScrolledToMessage={() => setScrollToMessageId(undefined)}

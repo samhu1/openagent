@@ -122,6 +122,21 @@ pnpm dist:linux
 
 ## Runtime Setup
 
+### First Run Setup (packaged app users)
+
+If you downloaded a release build (`.dmg`, `.exe`, `.AppImage`), complete this once before your first prompt:
+
+1. Open **Settings** in OAgent.
+2. Configure **one** provider: **OpenRouter** or **Ollama**.
+3. Pick a model and save.
+
+Downloading and launching the app is not enough by itself; at least one provider must be configured before prompts can run.
+
+**OpenRouter vs Ollama (quick guide)**
+
+- **OpenRouter**: cloud-hosted models, easiest setup with an API key, requires internet.
+- **Ollama**: local models on your machine, more private/local-first, requires model download and local resources.
+
 ### OpenRouter
 
 Set your OpenRouter key in app settings (`OpenRouter Key`) and choose a model.
@@ -145,7 +160,7 @@ Then configure the Ollama endpoint/model in OAgent settings.
 | `pnpm build` | Production build for Electron + renderer |
 | `pnpm start` | Launch packaged app entry locally |
 | `pnpm dist` | Build distributables via electron-builder |
-| `./scripts/oss-check.sh` | Typecheck, build, audit, and basic secret scan |
+| `./scripts/oss-check.sh` | Typecheck, build, runtime dependency audit, secret scan, private path guard, required OSS file check |
 
 ## Repository Structure
 
@@ -171,6 +186,8 @@ pnpm build
 
 3. Include validation notes and screenshots for UI changes
 
+Contributor recognition lives in [`CONTRIBUTORS.md`](CONTRIBUTORS.md). First-time contributors can be featured there after their first merged PR.
+
 ## Security
 
 Please report vulnerabilities privately per [`SECURITY.md`](SECURITY.md).  
@@ -181,6 +198,9 @@ Do not open public security issues.
 - [`SUPPORT.md`](SUPPORT.md) for support expectations
 - [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community guidelines
 - [`MAINTAINERS.md`](MAINTAINERS.md) for maintainer contacts
+- [`CONTRIBUTORS.md`](CONTRIBUTORS.md) for contributor spotlight and hall of contributors
+- [`docs/starter-issues.md`](docs/starter-issues.md) for contributor-friendly backlog ideas
+- [`docs/open-source-readiness.md`](docs/open-source-readiness.md) for pre-public checklist
 
 ## License
 

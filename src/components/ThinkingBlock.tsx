@@ -18,7 +18,8 @@ export function ThinkingBlock({ thinking, isStreaming, thinkingComplete }: Think
 
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="mb-2 animate-fade-in-down">
-      <CollapsibleTrigger className="group flex items-center gap-1.5 py-1 text-xs text-foreground/45 hover:text-foreground/75 transition-colors">
+      <CollapsibleTrigger className="group relative flex items-center gap-1.5 overflow-hidden rounded-md py-1 text-xs text-foreground/45 hover:text-foreground/75 transition-colors">
+        {isThinking && <span className="tool-shimmer opacity-45" />}
         {isThinking ? (
           <Loader2 className="h-3 w-3 animate-spin text-foreground/40" />
         ) : (
@@ -36,7 +37,7 @@ export function ThinkingBlock({ thinking, isStreaming, thinkingComplete }: Think
         )}
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="mt-1 max-h-60 overflow-auto border-s-2 border-foreground/10 ps-3 py-1 text-xs text-foreground/45 whitespace-pre-wrap">
+        <div className={`mt-1 max-h-60 overflow-auto border-s-2 border-foreground/10 ps-3 py-1 text-xs text-foreground/45 whitespace-pre-wrap ${isThinking ? "shimmer-quiet" : ""}`}>
           {thinking}
         </div>
       </CollapsibleContent>

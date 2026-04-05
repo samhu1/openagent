@@ -8,7 +8,11 @@ Security fixes are prioritized for the latest main branch and the latest tagged 
 
 Please do not open public issues for security vulnerabilities.
 
-Report privately by contacting the maintainers listed in `MAINTAINERS.md` and include:
+Report privately through GitHub Security Advisories:
+
+- https://github.com/samhu1/openagent/security/advisories/new
+
+If needed, contact maintainers listed in `MAINTAINERS.md` and include:
 
 - Description of the issue
 - Reproduction steps or proof of concept

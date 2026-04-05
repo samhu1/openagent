@@ -13,7 +13,11 @@ jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          # Gitleaks scans the commit range on pull requests and needs parent
+          # commits available locally to resolve head^..head.
+          fetch-depth: 0
       - name: Gitleaks scan
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -32,18 +36,18 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: pnpm audit
+      - name: pnpm audit (production dependencies)
         shell: bash
         run: |
           set +e
-          output="$(pnpm audit --audit-level moderate 2>&1)"
+          output="$(pnpm audit --audit-level moderate --prod 2>&1)"
           status=$?
           set -e
 
@@ -60,5 +64,5 @@ jobs:
             exit 0
           fi
 
-          # Preserve failures for real audit findings or other errors.
+          # Preserve failures for real runtime dependency findings or other errors.
           exit "$status"

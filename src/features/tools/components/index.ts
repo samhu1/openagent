@@ -5,4 +5,7 @@ export { GitPanel } from "@/features/tools/components/GitPanel";
 export { FilesPanel } from "@/features/tools/components/FilesPanel";
 export { McpPanel } from "@/features/tools/components/McpPanel";
 export { ToolPicker } from "@/features/tools/components/ToolPicker";
+export { SecurityPanel } from "@/features/tools/components/SecurityPanel";
+export { LocalDevPanel } from "@/features/tools/components/LocalDevPanel";
+export { UIEditorPanel } from "@/features/tools/components/UIEditorPanel";
 export type { ToolId } from "@/features/tools/components/ToolPicker";

@@ -16,6 +16,12 @@
 
 -
 
+## Contributor Recognition
+
+- Preferred public name (optional):
+- Preferred link (optional):
+- OK to feature in `CONTRIBUTORS.md`: [ ] Yes
+
 ## Checklist
 
 - [ ] Scope is focused

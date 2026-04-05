@@ -4,7 +4,11 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { UIMessage } from "@/types";
 import { ThinkingBlock } from "./ThinkingBlock";
 import { CopyButton } from "./CopyButton";
@@ -64,113 +68,170 @@ interface MessageBubbleProps {
   isContinuation?: boolean;
 }
 
-export const MessageBubble = memo(function MessageBubble({ message, isContinuation }: MessageBubbleProps) {
-  if (message.role === "system") {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-1 text-center text-xs text-muted-foreground">
-        <div className="inline-flex items-center gap-1.5">
-          <Info className="h-3 w-3" />
-          {message.content}
-        </div>
-      </div>
-    );
-  }
-
-  const isUser = message.role === "user";
-  const time = new Date(message.timestamp).toLocaleTimeString();
-
-  if (isUser) {
-    const displayContent = stripFileContext(message.content);
-    return (
-      <div className="flex justify-end px-0 py-1.5 animate-fade-in-up">
-        <div className="max-w-[76%]">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="rounded-2xl rounded-tr-sm border border-foreground/8 bg-foreground/[0.06] px-3.5 py-2 text-sm text-foreground wrap-break-word whitespace-pre-wrap shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]">
-                {message.images && message.images.length > 0 && (
-                  <div className="mb-2 flex flex-wrap gap-2">
-                    {message.images.map((img) => (
-                      <img
-                        key={img.id}
-                        src={`data:${img.mediaType};base64,${img.data}`}
-                        alt={img.fileName ?? "attached image"}
-                        className="max-h-48 rounded-lg"
-                      />
-                    ))}
-                  </div>
-                )}
-                {renderWithMentions(displayContent)}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p className="text-xs">{time}</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
-    );
-  }
-
-  // Assistant message
-  return (
-    <div className={`flex justify-start px-0 ${isContinuation ? "py-0.5" : "py-1.5"} animate-fade-in-up`}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="min-w-0 max-w-[88%] wrap-break-word">
-            {message.thinking && (
-              <ThinkingBlock
-                thinking={message.thinking}
-                isStreaming={message.isStreaming}
-                thinkingComplete={message.thinkingComplete}
-              />
-            )}
-            {message.content ? (
-              <div className="prose prose-invert prose-sm max-w-none text-foreground">
-                <ReactMarkdown
-                  remarkPlugins={REMARK_PLUGINS}
-                  components={MD_COMPONENTS}
-                >
-                  {message.content}
-                </ReactMarkdown>
-              </div>
-            ) : message.isStreaming && !message.thinking ? (
-              <span className="inline-flex items-center gap-1 py-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground/45 animate-[pulse-subtle_1s_ease-in-out_infinite]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground/35 animate-[pulse-subtle_1s_ease-in-out_150ms_infinite]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground/25 animate-[pulse-subtle_1s_ease-in-out_300ms_infinite]" />
-              </span>
-            ) : null}
+export const MessageBubble = memo(
+  function MessageBubble({ message, isContinuation }: MessageBubbleProps) {
+    if (message.role === "system") {
+      return (
+        <div className="mx-auto max-w-3xl px-4 py-1 text-center text-xs text-muted-foreground">
+          <div className="inline-flex items-center gap-1.5">
+            <Info className="h-3 w-3" />
+            {message.content}
           </div>
-        </TooltipTrigger>
-        <TooltipContent side="right">
-          <p className="text-xs">{time}</p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  );
-}, (prev, next) =>
-  prev.message.content === next.message.content &&
-  prev.message.thinking === next.message.thinking &&
-  prev.message.isStreaming === next.message.isStreaming &&
-  prev.message.thinkingComplete === next.message.thinkingComplete &&
-  prev.message.images === next.message.images &&
-  prev.isContinuation === next.isContinuation,
+        </div>
+      );
+    }
+
+    const isUser = message.role === "user";
+    const time = new Date(message.timestamp).toLocaleTimeString();
+
+    if (isUser) {
+      const displayContent = stripFileContext(message.content);
+      return (
+        <div className="flex justify-end px-0 py-1.5 animate-fade-in-up">
+          <div className="max-w-[76%]">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="rounded-2xl rounded-tr-sm border border-foreground/8 bg-foreground/[0.06] px-3.5 py-2 text-sm text-foreground wrap-break-word whitespace-pre-wrap shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]">
+                  {message.images && message.images.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      {message.images.map((img) => (
+                        <img
+                          key={img.id}
+                          src={`data:${img.mediaType};base64,${img.data}`}
+                          alt={img.fileName ?? "attached image"}
+                          className="max-h-48 rounded-lg"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {renderWithMentions(displayContent)}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p className="text-xs">{time}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      );
+    }
+
+    // Assistant message
+    return (
+      <div
+        className={`flex justify-start px-0 ${isContinuation ? "py-0.5" : "py-1.5"} animate-fade-in-up`}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className={`min-w-0 max-w-[88%] wrap-break-word ${message.isStreaming ? "shimmer-quiet rounded-md" : ""}`}
+            >
+              {message.thinking && (
+                <ThinkingBlock
+                  thinking={message.thinking}
+                  isStreaming={message.isStreaming}
+                  thinkingComplete={message.thinkingComplete}
+                />
+              )}
+              {message.content ? (
+                <div className="prose prose-invert prose-sm max-w-none text-foreground">
+                  <ReactMarkdown
+                    remarkPlugins={REMARK_PLUGINS}
+                    components={{
+                      ...MD_COMPONENTS,
+                      code: (props) => (
+                        <CodeBlock
+                          {...props}
+                          onSend={(text) => {
+                            const event = new CustomEvent("oagent:send", {
+                              detail: text,
+                            });
+                            window.dispatchEvent(event);
+                          }}
+                        />
+                      ),
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
+              ) : message.isStreaming && !message.thinking ? (
+                <span className="shimmer-pulse inline-flex items-center gap-1 py-1 px-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-foreground/45 animate-[pulse-subtle_1s_ease-in-out_infinite]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-foreground/35 animate-[pulse-subtle_1s_ease-in-out_150ms_infinite]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-foreground/25 animate-[pulse-subtle_1s_ease-in-out_300ms_infinite]" />
+                </span>
+              ) : null}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p className="text-xs">{time}</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  },
+  (prev, next) =>
+    prev.message.content === next.message.content &&
+    prev.message.thinking === next.message.thinking &&
+    prev.message.isStreaming === next.message.isStreaming &&
+    prev.message.thinkingComplete === next.message.thinkingComplete &&
+    prev.message.images === next.message.images &&
+    prev.isContinuation === next.isContinuation,
 );
 
 type CodeBlockProps = ComponentPropsWithoutRef<"code"> & {
   inline?: boolean;
+  onSend?: (text: string) => void;
 };
 
-function CodeBlock({ inline, className, children, ...props }: CodeBlockProps) {
+function CodeBlock({
+  inline,
+  className,
+  children,
+  onSend,
+  ...props
+}: CodeBlockProps) {
   const match = /language-(\w+)/.exec(className || "");
   const code = String(children).replace(/\n$/, "");
+
+  if (!inline && match && match[1] === "proposal") {
+    const options = code.split("\n").filter((line) => line.trim().length > 0);
+    return (
+      <div className="my-3 space-y-2">
+        <div className="text-xs font-semibold text-foreground/70 uppercase tracking-widest mb-1">
+          Proposed Next Steps
+        </div>
+        <div className="grid gap-2">
+          {options.map((opt, i) => {
+            const cleanOpt = opt.replace(/^-\s*/, "");
+            return (
+              <button
+                key={i}
+                onClick={() => onSend?.(cleanOpt)}
+                className="text-left px-4 py-3 rounded-xl border border-border/50 bg-muted/20 hover:bg-muted/40 hover:border-border/80 transition-all text-sm group flex items-center justify-between"
+              >
+                <span>{cleanOpt}</span>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-foreground/10 px-2 py-1 rounded text-foreground/70">
+                  Select
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   if (!inline && match) {
     return (
       <div className="group/code relative my-2 rounded-lg bg-foreground/[0.03] overflow-hidden">
         <div className="flex items-center justify-between bg-foreground/[0.04] px-3 py-1">
           <span className="text-[11px] text-muted-foreground">{match[1]}</span>
-          <CopyButton text={code} className="opacity-0 transition-opacity group-hover/code:opacity-100" />
+          <CopyButton
+            text={code}
+            className="opacity-0 transition-opacity group-hover/code:opacity-100"
+          />
         </div>
         <SyntaxHighlighter
           style={oneDark}
@@ -188,7 +249,10 @@ function CodeBlock({ inline, className, children, ...props }: CodeBlockProps) {
     return (
       <div className="group/code relative my-2 rounded-lg bg-foreground/[0.03] overflow-hidden">
         <div className="flex items-center justify-end bg-foreground/[0.04] px-3 py-1">
-          <CopyButton text={code} className="opacity-0 transition-opacity group-hover/code:opacity-100" />
+          <CopyButton
+            text={code}
+            className="opacity-0 transition-opacity group-hover/code:opacity-100"
+          />
         </div>
         <pre className="overflow-x-auto p-3 text-xs">
           <code {...props}>{code}</code>
@@ -198,7 +262,10 @@ function CodeBlock({ inline, className, children, ...props }: CodeBlockProps) {
   }
 
   return (
-    <code className="rounded bg-foreground/[0.08] px-1.5 py-0.5 text-xs" {...props}>
+    <code
+      className="rounded bg-foreground/[0.08] px-1.5 py-0.5 text-xs"
+      {...props}
+    >
       {children}
     </code>
   );

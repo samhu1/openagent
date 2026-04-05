@@ -19,3 +19,15 @@
 - name: help wanted
   color: 008672
   description: Extra attention is needed
+- name: onboarding
+  color: 1d76db
+  description: First-run setup and activation experience
+- name: ux
+  color: fbca04
+  description: User experience and interface improvements
+- name: docs
+  color: 0e8a16
+  description: Documentation changes or requests
+- name: community
+  color: 5319e7
+  description: Community process and contributor experience

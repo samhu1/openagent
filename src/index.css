@@ -211,6 +211,60 @@ html.glass-enabled #root {
   animation: tool-shimmer 2.4s ease-in-out infinite;
 }
 
+/* ── Generic shimmer micro-animation ── */
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(210%);
+  }
+}
+
+.shimmer-quiet {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.shimmer-quiet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(0.985 0 0 / 0.02) 20%,
+    oklch(0.985 0 0 / 0.08) 50%,
+    oklch(0.985 0 0 / 0.02) 80%,
+    transparent 100%
+  );
+  animation: shimmer-sweep 2.6s ease-in-out infinite;
+}
+
+.shimmer-pulse {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.shimmer-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(0.985 0 0 / 0.1) 50%,
+    transparent 100%
+  );
+  animation: shimmer-sweep 2s ease-in-out infinite;
+}
+
 /* ── Search result highlight flash ── */
 @keyframes search-flash {
   0% {
@@ -337,5 +391,13 @@ html.glass-enabled #root {
   }
   50% {
     opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-shimmer::after,
+  .shimmer-quiet::after,
+  .shimmer-pulse::after {
+    animation: none !important;
   }
 }

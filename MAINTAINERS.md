@@ -2,7 +2,12 @@
 
 ## Current maintainers
 
-- Samuel Hu
+- Samuel Hu ([samhu1](https://github.com/samhu1))
+
+## Contact
+
+- Preferred for vulnerabilities: GitHub Security Advisories for this repository
+- General project contact: open a GitHub issue or discussion
 
 ## Responsibilities
 

@@ -38,6 +38,7 @@ pnpm exec tsc --noEmit
 - Link related issues.
 - Add screenshots/GIFs for UI changes.
 - Keep PR scope limited to one concern.
+- If you want public credit beyond commit history, add your preferred display name/link in the PR template so maintainers can feature you in [`CONTRIBUTORS.md`](CONTRIBUTORS.md).
 
 ## Code style
 
@@ -53,3 +54,9 @@ Use the bug report template and include:
 - Repro steps
 - Expected vs actual behavior
 - Logs and screenshots where possible
+
+## Recognition
+
+- First-time contributors can be added to [`CONTRIBUTORS.md`](CONTRIBUTORS.md) after their first merged pull request.
+- Recent first-time contributors may also be featured in the Contributor Spotlight section.
+- If you want to be credited under a different public name than your GitHub handle, note that in your PR.

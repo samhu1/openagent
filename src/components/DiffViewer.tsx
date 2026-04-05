@@ -1,7 +1,12 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { diffLines, diffWords } from "diff";
 import { Copy, Check, ChevronDown } from "lucide-react";
 import { OpenInEditorButton } from "./OpenInEditorButton";
+import {
+  computeDiffLines,
+  computeFullFileDiff,
+  collapseContext,
+  type DiffLine,
+} from "@/lib/diff-utils";
 
 // ── Types ──
 
@@ -9,25 +14,6 @@ interface DiffViewerProps {
   oldString: string;
   newString: string;
   filePath: string;
-}
-
-interface DiffLine {
-  type: "added" | "removed" | "context";
-  content: string;
-  lineNum?: number;
-  highlights?: WordHighlight[];
-}
-
-interface CollapsedLine {
-  type: "collapsed";
-  count: number;
-}
-
-type DisplayLine = DiffLine | CollapsedLine;
-
-interface WordHighlight {
-  value: string;
-  type: "added" | "removed" | "unchanged";
 }
 
 const CONTEXT_LINES = 3;
@@ -217,173 +203,4 @@ function CollapsedRow({
       </span>
     </button>
   );
-}
-
-// ── Diff computation ──
-
-function computeDiffLines(
-  oldStr: string,
-  newStr: string,
-): { allLines: DiffLine[]; stats: { added: number; removed: number } } {
-  const changes = diffLines(oldStr, newStr);
-  const result: DiffLine[] = [];
-  let oldNum = 1;
-  let newNum = 1;
-  let added = 0;
-  let removed = 0;
-
-  for (let i = 0; i < changes.length; i++) {
-    const change = changes[i];
-    const changeLines = splitLines(change.value);
-
-    if (change.removed) {
-      removed += changeLines.length;
-
-      const nextChange = changes[i + 1];
-      const hasMatchingAdd = nextChange?.added === true;
-      const addedLines = hasMatchingAdd ? splitLines(nextChange.value) : [];
-      const maxPaired = Math.min(changeLines.length, addedLines.length);
-
-      for (let j = 0; j < changeLines.length; j++) {
-        const wordDiffs =
-          j < maxPaired
-            ? computeWordHighlights(changeLines[j], addedLines[j])
-            : undefined;
-        result.push({
-          type: "removed",
-          content: changeLines[j],
-          lineNum: oldNum++,
-          highlights: wordDiffs?.removed,
-        });
-      }
-
-      if (hasMatchingAdd) {
-        added += addedLines.length;
-        for (let j = 0; j < addedLines.length; j++) {
-          const wordDiffs =
-            j < maxPaired
-              ? computeWordHighlights(changeLines[j], addedLines[j])
-              : undefined;
-          result.push({
-            type: "added",
-            content: addedLines[j],
-            lineNum: newNum++,
-            highlights: wordDiffs?.added,
-          });
-        }
-        i++;
-      }
-    } else if (change.added) {
-      added += changeLines.length;
-      for (const line of changeLines) {
-        result.push({ type: "added", content: line, lineNum: newNum++ });
-      }
-    } else {
-      for (const line of changeLines) {
-        result.push({
-          type: "context",
-          content: line,
-          lineNum: newNum++,
-        });
-        oldNum++;
-      }
-    }
-  }
-
-  return { allLines: result, stats: { added, removed } };
-}
-
-function computeFullFileDiff(
-  fileContent: string,
-  oldStr: string,
-  newStr: string,
-): { allLines: DiffLine[]; stats: { added: number; removed: number } } {
-  // The edit has already been applied — fileContent is the NEW file.
-  // Reconstruct the old file by reversing the edit.
-  const idx = fileContent.indexOf(newStr);
-  if (idx !== -1) {
-    const oldFileContent =
-      fileContent.slice(0, idx) + oldStr + fileContent.slice(idx + newStr.length);
-    return computeDiffLines(oldFileContent, fileContent);
-  }
-
-  // Maybe the file hasn't been written yet — old_string might still be in the file
-  const oldIdx = fileContent.indexOf(oldStr);
-  if (oldIdx !== -1) {
-    const newFileContent =
-      fileContent.slice(0, oldIdx) +
-      newStr +
-      fileContent.slice(oldIdx + oldStr.length);
-    return computeDiffLines(fileContent, newFileContent);
-  }
-
-  // Can't locate edit in file — fall back to change-only diff
-  return computeDiffLines(oldStr, newStr);
-}
-
-function collapseContext(
-  lines: DiffLine[],
-  keep: number,
-  expanded: Set<number>,
-): DisplayLine[] {
-  const result: DisplayLine[] = [];
-  let contextRun: DiffLine[] = [];
-  let contextStartIdx = result.length;
-
-  const flushContext = () => {
-    const insertIdx = contextStartIdx;
-    if (contextRun.length <= keep * 2 + 2 || expanded.has(insertIdx + keep)) {
-      result.push(...contextRun);
-    } else {
-      result.push(...contextRun.slice(0, keep));
-      result.push({ type: "collapsed", count: contextRun.length - keep * 2 });
-      result.push(...contextRun.slice(-keep));
-    }
-    contextRun = [];
-  };
-
-  for (const line of lines) {
-    if (line.type === "context") {
-      if (contextRun.length === 0) contextStartIdx = result.length;
-      contextRun.push(line);
-    } else {
-      if (contextRun.length > 0) flushContext();
-      result.push(line);
-    }
-  }
-  if (contextRun.length > 0) flushContext();
-
-  return result;
-}
-
-// ── Word-level highlighting ──
-
-function computeWordHighlights(
-  oldLine: string,
-  newLine: string,
-): { removed: WordHighlight[]; added: WordHighlight[] } {
-  const diffs = diffWords(oldLine, newLine);
-  const removed: WordHighlight[] = [];
-  const added: WordHighlight[] = [];
-
-  for (const d of diffs) {
-    if (d.removed) {
-      removed.push({ value: d.value, type: "removed" });
-    } else if (d.added) {
-      added.push({ value: d.value, type: "added" });
-    } else {
-      removed.push({ value: d.value, type: "unchanged" });
-      added.push({ value: d.value, type: "unchanged" });
-    }
-  }
-
-  return { removed, added };
-}
-
-function splitLines(value: string): string[] {
-  const lines = value.split("\n");
-  if (lines.length > 0 && lines[lines.length - 1] === "") {
-    lines.pop();
-  }
-  return lines;
 }

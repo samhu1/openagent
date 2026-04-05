@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ShieldAlert, Check, X, Send, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PermissionRequest } from "@/types";
+import { EditPermissionPrompt } from "./EditPermissionPrompt";
 
 const TOOL_LABELS: Record<string, string> = {
   Write: "Create a file",
@@ -225,6 +226,10 @@ export function PermissionPrompt({ request, onRespond }: PermissionPromptProps) 
 
   if (request.toolName === "AskUserQuestion") {
     return <AskUserQuestionPrompt request={request} onRespond={onRespond} />;
+  }
+
+  if (request.toolName === "Edit" && request.toolInput.old_string != null) {
+    return <EditPermissionPrompt request={request} onRespond={onRespond} />;
   }
 
   const label = TOOL_LABELS[request.toolName] ?? `Use tool: ${request.toolName}`;

@@ -22,7 +22,7 @@ importers:
         version: 1.27.1(zod@3.25.76)
       '@tailwindcss/typography':
         specifier: ^0.5.19
-        version: 0.5.19(tailwindcss@4.2.0)
+        version: 0.5.19(tailwindcss@4.2.2)
       '@xterm/addon-fit':
         specifier: ^0.11.0
         version: 0.11.0
@@ -118,8 +118,8 @@ importers:
         specifier: ^3.8.4
         version: 3.8.5(@types/node@25.3.0)(typescript@5.9.3)
       tailwindcss:
-        specifier: ^4.1.18
-        version: 4.2.0
+        specifier: ^4.2.2
+        version: 4.2.2
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)
@@ -4126,6 +4126,9 @@ packages:
   tailwindcss@4.2.0:
     resolution: {integrity: sha512-yYzTZ4++b7fNYxFfpnberEEKu43w44aqDMNM9MHMmcKuCH7lL8jJ4yJ7LGHv7rSwiqM0nkiobF9I6cLlpS2P7Q==}
 
+  tailwindcss@4.2.2:
+    resolution: {integrity: sha512-KWBIxs1Xb6NoLdMVqhbhgwZf2PGBpPEiwOqgI4pFIYbNTfBXiKYyWoTsXgBQ9WFg/OlhnvHaY+AEpW7wSmFo2Q==}
+
   tapable@2.3.0:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
@@ -6099,10 +6102,10 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.2.0
       '@tailwindcss/oxide-win32-x64-msvc': 4.2.0
 
-  '@tailwindcss/typography@0.5.19(tailwindcss@4.2.0)':
+  '@tailwindcss/typography@0.5.19(tailwindcss@4.2.2)':
     dependencies:
       postcss-selector-parser: 6.0.10
-      tailwindcss: 4.2.0
+      tailwindcss: 4.2.2
 
   '@tailwindcss/vite@4.2.0(vite@7.3.1(@types/node@25.3.0)(jiti@2.6.1)(lightningcss@1.31.1))':
     dependencies:
@@ -9021,6 +9024,8 @@ snapshots:
   tailwind-merge@3.5.0: {}
 
   tailwindcss@4.2.0: {}
+
+  tailwindcss@4.2.2: {}
 
   tapable@2.3.0: {}
 

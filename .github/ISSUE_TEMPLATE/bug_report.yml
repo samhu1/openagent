@@ -33,4 +33,9 @@ body:
     id: logs
     attributes:
       label: Logs/screenshots
-      description: Paste relevant logs or attach screenshots
+      description: Paste relevant logs or attach screenshots. You can generate a sanitized bundle in-app from Settings → General → Copy Debug Info.
+  - type: textarea
+    id: debug_info
+    attributes:
+      label: Debug info bundle
+      description: Paste the copied debug info JSON block from Settings → General → Copy Debug Info.

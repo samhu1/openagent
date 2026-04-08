@@ -54,6 +54,7 @@ Use the bug report template and include:
 - Repro steps
 - Expected vs actual behavior
 - Logs and screenshots where possible
+- Debug bundle from `Settings → General → Copy Debug Info` (paste into issue and optionally attach the generated `debug-info-*.json` file path shown in-app)
 
 ## Recognition
 

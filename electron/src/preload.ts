@@ -172,6 +172,9 @@ const clientCoreApi = {
     authStatus: (serverName: string) => ipcRenderer.invoke("mcp:auth-status", serverName),
     probe: (servers: unknown[]) => ipcRenderer.invoke("mcp:probe", servers),
   },
+  debug: {
+    collect: () => ipcRenderer.invoke("debug:collect"),
+  },
   agents: {
     list: () => ipcRenderer.invoke("agents:list"),
     save: (agent: unknown) => ipcRenderer.invoke("agents:save", agent),

@@ -21,6 +21,7 @@ import * as gitHandler from "./handlers/git.handler";
 import * as agentRegistryHandler from "./handlers/oagent-registry.handler";
 import * as oapSessionsHandler from "./handlers/oap-sessions.handler";
 import * as mcpHandler from "./handlers/mcp.handler";
+import * as debugHandler from "./handlers/debug.handler";
 import { ipcMain } from "electron";
 
 // --- Liquid Glass command-line switches (must be set before app.whenReady()) ---
@@ -97,6 +98,7 @@ gitHandler.register();
 agentRegistryHandler.register();
 oapSessionsHandler.register(getMainWindow);
 mcpHandler.register();
+debugHandler.register();
 
 // --- DevTools in separate window via remote debugging ---
 let devToolsWindow: BrowserWindow | null = null;

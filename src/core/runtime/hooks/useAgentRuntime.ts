@@ -69,6 +69,15 @@ export function useOAgent({
   const [contextUsage, setContextUsage] = useState<ContextUsage | null>(null);
   const [isCompacting, setIsCompacting] = useState(false);
   const [mcpServerStatuses, setMcpServerStatuses] = useState<McpServerStatus[]>([]);
+  const mapMcpStatuses = useCallback(
+    (servers: Array<{ name: string; status: string; error?: string }> = []): McpServerStatus[] =>
+      servers.map((s) => ({
+        name: s.name,
+        status: toMcpStatusState(s.status),
+        ...(s.error ? { error: s.error } : {}),
+      })),
+    [],
+  );
 
   const buffer = useRef(new StreamingBuffer());
   const parentToolMap = useRef<ParentToolMap>(new Map());
@@ -256,22 +265,15 @@ export function useOAgent({
             version: init.claude_code_version,
             permissionMode: init.permissionMode,
           });
-          if (init.mcp_servers?.length) {
-            setMcpServerStatuses(init.mcp_servers.map((s) => ({
-              name: s.name,
-              status: toMcpStatusState(s.status),
-            })));
-            // Auto-refresh detailed MCP status after a short delay (auth flows may still be in progress)
-            const sid = sessionIdRef.current;
-            if (sid) {
-              setTimeout(() => {
-                window.clientCore.mcpStatus(sid).then((result) => {
-                  if (result.servers?.length) {
-                    setMcpServerStatuses(result.servers as McpServerStatus[]);
-                  }
-                }).catch(() => { /* session may have been stopped */ });
-              }, 3000);
-            }
+          setMcpServerStatuses(mapMcpStatuses(init.mcp_servers ?? []));
+          // Auto-refresh detailed MCP status after a short delay (auth flows may still be in progress)
+          const sid = sessionIdRef.current;
+          if (sid) {
+            setTimeout(() => {
+              window.clientCore.mcpStatus(sid).then((result) => {
+                setMcpServerStatuses(mapMcpStatuses(result.servers ?? []));
+              }).catch(() => { /* session may have been stopped */ });
+            }, 3000);
           }
           setIsConnected(true);
           setIsProcessing(true);
@@ -587,16 +589,14 @@ export function useOAgent({
           // After auth completes, refresh MCP server statuses
           if (!authEvt.isAuthenticating && sessionIdRef.current) {
             window.clientCore.mcpStatus(sessionIdRef.current).then((result) => {
-              if (result.servers?.length) {
-                setMcpServerStatuses(result.servers as McpServerStatus[]);
-              }
+              setMcpServerStatuses(mapMcpStatuses(result.servers ?? []));
             }).catch(() => { /* session may have been stopped */ });
           }
           break;
         }
       }
     },
-    [resetStreaming, scheduleFlush, flushNow, handleSubagentEvent],
+    [resetStreaming, scheduleFlush, flushNow, handleSubagentEvent, mapMcpStatuses],
   );
 
   const send = useCallback(
@@ -751,10 +751,8 @@ export function useOAgent({
   const refreshMcpStatus = useCallback(async () => {
     if (!sessionIdRef.current) return;
     const result = await window.clientCore.mcpStatus(sessionIdRef.current);
-    if (result.servers?.length) {
-      setMcpServerStatuses(result.servers as McpServerStatus[]);
-    }
-  }, []);
+    setMcpServerStatuses(mapMcpStatuses(result.servers ?? []));
+  }, [mapMcpStatuses]);
 
   const reconnectMcpServer = useCallback(async (serverName: string) => {
     if (!sessionIdRef.current) return;

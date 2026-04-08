@@ -160,6 +160,29 @@ export function useSessionManager(projects: Project[], settings: Settings) {
     return projectsRef.current.find((p) => p.id === projectId) ?? null;
   }, []);
 
+  const pushSystemMessage = useCallback((setMessagesFn: (updater: (prev: UIMessage[]) => UIMessage[]) => void, content: string) => {
+    setMessagesFn((prev) => [
+      ...prev,
+      {
+        id: `system-setup-${Date.now()}`,
+        role: "system" as const,
+        content,
+        timestamp: Date.now(),
+      },
+    ]);
+  }, []);
+
+  const checkProviderSetup = useCallback(async (model?: string) => {
+    const settings = settingsRef.current;
+    const result = await window.clientCore.checkProviderSetup({
+      llmProvider: settings.llmProvider,
+      model,
+      openRouterKey: settings.openRouterKey,
+      ollamaEndpoint: settings.ollamaEndpoint,
+    });
+    return result;
+  }, []);
+
   // Eagerly start a Agent SDK session for immediate MCP status display
   const eagerStartSession = useCallback(async (projectId: string, options?: StartOptions) => {
     const project = projectsRef.current.find((p) => p.id === projectId);
@@ -1043,7 +1066,17 @@ export function useSessionManager(projects: Project[], settings: Settings) {
         ...(inferredProvider === "ollama" ? { ollamaEndpoint: settingsRef.current.ollamaEndpoint } : {}),
       };
 
+      const setup = await checkProviderSetup(session.model);
+      if (!setup.ok) {
+        pushSystemMessage(engine.setMessages, `Setup required: ${setup.error}`);
+        return;
+      }
+
       const result = await window.clientCore.start(startPayload);
+      if ("error" in result && result.error) {
+        pushSystemMessage(engine.setMessages, `Setup required: ${result.error}`);
+        return;
+      }
       const newSessionId = result.sessionId;
 
       if (newSessionId !== oldId) {
@@ -1111,7 +1144,7 @@ export function useSessionManager(projects: Project[], settings: Settings) {
         },
       ]);
     },
-    [engine.setMessages, findProject],
+    [checkProviderSetup, engine.setMessages, findProject, pushSystemMessage],
   );
 
   const send = useCallback(
@@ -1119,6 +1152,13 @@ export function useSessionManager(projects: Project[], settings: Settings) {
       const activeId = activeSessionIdRef.current;
       if (activeId === DRAFT_ID) {
         const draftEngine = startOptionsRef.current.engine ?? "agent";
+        if (draftEngine !== "oap") {
+          const setup = await checkProviderSetup(startOptionsRef.current.model);
+          if (!setup.ok) {
+            pushSystemMessage(agent.setMessages, `Setup required: ${setup.error}`);
+            return;
+          }
+        }
         const sessionId = await materializeDraft(text);
         if (!sessionId) return;
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -1211,7 +1251,7 @@ export function useSessionManager(projects: Project[], settings: Settings) {
         return;
       }
     },
-    [agent.send, agent.setMessages, oap.send, oap.setMessages, oap.setIsProcessing, engine.setMessages, materializeDraft, reviveSession],
+    [agent.send, agent.setMessages, checkProviderSetup, oap.send, oap.setMessages, oap.setIsProcessing, engine.setMessages, materializeDraft, pushSystemMessage, reviveSession],
   );
 
   const deselectSession = useCallback(async () => {

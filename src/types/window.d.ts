@@ -40,6 +40,12 @@ declare global {
       mcpStatus: (sessionId: string) => Promise<{ servers: McpServerStatus[]; error?: string }>;
       mcpReconnect: (sessionId: string, serverName: string) => Promise<{ ok?: boolean; error?: string; restarted?: boolean }>;
       restartSession: (sessionId: string, mcpServers?: McpServerConfig[]) => Promise<{ ok?: boolean; error?: string; restarted?: boolean }>;
+      checkProviderSetup: (options: {
+        llmProvider?: "openrouter" | "ollama";
+        model?: string;
+        openRouterKey?: string;
+        ollamaEndpoint?: string;
+      }) => Promise<{ ok: boolean; provider: "openrouter" | "ollama"; error?: string }>;
       readFile: (filePath: string) => Promise<{ content?: string; error?: string }>;
       openInEditor: (filePath: string, line?: number) => Promise<{ ok?: boolean; editor?: string; error?: string }>;
       generateTitle: (

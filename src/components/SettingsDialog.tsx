@@ -1,10 +1,13 @@
-import { memo } from "react";
+import { memo, useState, useCallback } from "react";
 import {
   Settings as SettingsIcon,
   Key,
   Cpu,
   ChevronRight,
   RefreshCcw,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -23,11 +26,166 @@ interface SettingsDialogProps {
   settings: Settings;
 }
 
+type TestStatus =
+  | { kind: "idle" }
+  | { kind: "testing" }
+  | { kind: "success"; message: string }
+  | { kind: "error"; message: string };
+
+const IDLE: TestStatus = { kind: "idle" };
+
+// Probe OpenRouter by listing available models. The /models endpoint requires
+// a valid API key and returns 401 on an invalid one, so a successful response
+// confirms the key can authenticate. We never log the key itself.
+async function testOpenRouter(apiKey: string): Promise<TestStatus> {
+  const key = apiKey.trim();
+  if (!key) {
+    return {
+      kind: "error",
+      message: "No API key set. Paste your OpenRouter key above.",
+    };
+  }
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/models", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (res.status === 401 || res.status === 403) {
+      return {
+        kind: "error",
+        message: "Authentication failed. Check that the API key is valid.",
+      };
+    }
+    if (!res.ok) {
+      return {
+        kind: "error",
+        message: `OpenRouter returned HTTP ${res.status}. Try again in a moment.`,
+      };
+    }
+    return { kind: "success", message: "Connected to OpenRouter." };
+  } catch (err) {
+    return {
+      kind: "error",
+      message:
+        "Could not reach openrouter.ai. Check your network connection.",
+    };
+  }
+}
+
+// Probe Ollama by listing local models. A failed fetch means the endpoint is
+// unreachable (Ollama not running or wrong URL). A 200 with an empty or
+// mismatched model list means the endpoint works but the configured model
+// isn't pulled yet — we surface that as a distinct, actionable error.
+async function testOllama(
+  endpoint: string,
+  configuredModels: string,
+): Promise<TestStatus> {
+  const base = endpoint.trim().replace(/\/+$/, "");
+  if (!base) {
+    return {
+      kind: "error",
+      message: "No Ollama endpoint set. Default is http://localhost:11434.",
+    };
+  }
+  let res: Response;
+  try {
+    res = await fetch(`${base}/api/tags`, { method: "GET" });
+  } catch (err) {
+    return {
+      kind: "error",
+      message: `Could not reach ${base}. Is Ollama running?`,
+    };
+  }
+  if (!res.ok) {
+    return {
+      kind: "error",
+      message: `Ollama responded with HTTP ${res.status} at ${base}.`,
+    };
+  }
+  // Validate configured models are actually pulled locally.
+  let installedNames: string[] = [];
+  try {
+    const body = (await res.json()) as { models?: Array<{ name?: string }> };
+    installedNames = (body.models ?? [])
+      .map((m) => (m.name ?? "").trim())
+      .filter(Boolean);
+  } catch {
+    // Non-JSON response; endpoint reachable but shape is unexpected.
+    return {
+      kind: "success",
+      message: `Connected to ${base} (could not parse model list).`,
+    };
+  }
+  const wanted = configuredModels
+    .split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
+  if (wanted.length > 0) {
+    const missing = wanted.filter(
+      (w) => !installedNames.some((installed) => installed.startsWith(w)),
+    );
+    if (missing.length > 0) {
+      return {
+        kind: "error",
+        message: `Endpoint reachable, but not pulled: ${missing.join(", ")}. Run \`ollama pull <model>\`.`,
+      };
+    }
+  }
+  return {
+    kind: "success",
+    message: `Connected to Ollama (${installedNames.length} model${installedNames.length === 1 ? "" : "s"} installed).`,
+  };
+}
+
+function StatusRow({ status }: { status: TestStatus }) {
+  if (status.kind === "idle") return null;
+  if (status.kind === "testing") {
+    return (
+      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Testing connection…
+      </div>
+    );
+  }
+  if (status.kind === "success") {
+    return (
+      <div className="flex items-start gap-2 text-[11px] text-green-500">
+        <CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0" />
+        <span>{status.message}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-start gap-2 text-[11px] text-destructive">
+      <XCircle className="h-3 w-3 mt-0.5 shrink-0" />
+      <span>{status.message}</span>
+    </div>
+  );
+}
+
 export const SettingsDialog = memo(function SettingsDialog({
   open,
   onOpenChange,
   settings,
 }: SettingsDialogProps) {
+  const [openRouterStatus, setOpenRouterStatus] = useState<TestStatus>(IDLE);
+  const [ollamaStatus, setOllamaStatus] = useState<TestStatus>(IDLE);
+
+  const handleTestOpenRouter = useCallback(async () => {
+    setOpenRouterStatus({ kind: "testing" });
+    const result = await testOpenRouter(settings.openRouterKey);
+    setOpenRouterStatus(result);
+  }, [settings.openRouterKey]);
+
+  const handleTestOllama = useCallback(async () => {
+    setOllamaStatus({ kind: "testing" });
+    const result = await testOllama(
+      settings.ollamaEndpoint,
+      settings.ollamaModel,
+    );
+    setOllamaStatus(result);
+  }, [settings.ollamaEndpoint, settings.ollamaModel]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] overflow-hidden border-border/40 bg-background/95 backdrop-blur-xl animate-scale-in">
@@ -74,7 +232,10 @@ export const SettingsDialog = memo(function SettingsDialog({
                   type="password"
                   placeholder="sk-or-v1-..."
                   value={settings.openRouterKey}
-                  onChange={(e) => settings.setOpenRouterKey(e.target.value)}
+                  onChange={(e) => {
+                    settings.setOpenRouterKey(e.target.value);
+                    setOpenRouterStatus(IDLE);
+                  }}
                   className="bg-muted/20 border-border/40 focus:ring-primary/20"
                 />
                 <p className="text-[10px] text-muted-foreground">
@@ -92,6 +253,18 @@ export const SettingsDialog = memo(function SettingsDialog({
                   className="bg-muted/20 border-border/40"
                 />
               </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleTestOpenRouter}
+                  disabled={openRouterStatus.kind === "testing"}
+                  className="h-7 text-xs"
+                >
+                  Test connection
+                </Button>
+                <StatusRow status={openRouterStatus} />
+              </div>
             </div>
 
             <div className="w-full border-t border-border/40 my-4" />
@@ -105,7 +278,10 @@ export const SettingsDialog = memo(function SettingsDialog({
                 <Input
                   placeholder="http://localhost:11434"
                   value={settings.ollamaEndpoint}
-                  onChange={(e) => settings.setOllamaEndpoint(e.target.value)}
+                  onChange={(e) => {
+                    settings.setOllamaEndpoint(e.target.value);
+                    setOllamaStatus(IDLE);
+                  }}
                   className="bg-muted/20 border-border/40"
                 />
               </div>
@@ -116,9 +292,24 @@ export const SettingsDialog = memo(function SettingsDialog({
                 <Input
                   placeholder="llama3.2, qwen2.5-coder:7b"
                   value={settings.ollamaModel}
-                  onChange={(e) => settings.setOllamaModel(e.target.value)}
+                  onChange={(e) => {
+                    settings.setOllamaModel(e.target.value);
+                    setOllamaStatus(IDLE);
+                  }}
                   className="bg-muted/20 border-border/40"
                 />
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleTestOllama}
+                  disabled={ollamaStatus.kind === "testing"}
+                  className="h-7 text-xs"
+                >
+                  Test connection
+                </Button>
+                <StatusRow status={ollamaStatus} />
               </div>
             </div>
           </TabsContent>
